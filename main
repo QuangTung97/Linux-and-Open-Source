@@ -1,0 +1,128 @@
+#!/bin/bash
+tokens=( "$@" )
+declare -a stack
+
+push() {
+    local stack_size="${#stack[@]}"
+    stack["$stack_size"]=$1
+}
+
+stack_prev_back() {
+    local stack_size="${#stack[@]}"
+    ((stack_size -= 2))
+    return_="${stack[$stack_size]}"
+}
+
+pop() {
+    local stack_size="${#stack[@]}"
+    ((stack_size--))
+    return_="${stack[$stack_size]}"
+    unset stack[$stack_size]
+}
+
+stack_size() {
+    return_="${#stack[@]}"
+}
+
+stack_empty() {
+    local size="${#stack[@]}"
+    ((size <= 0))
+}
+
+stack_check_prev_back_equal() {
+    if stack_empty; then 
+        exit
+    fi
+
+    local token="$1"
+    stack_prev_back
+    if [[ "$return_" == "$token" ]]; then
+        return 0
+    fi
+    return 1
+}
+
+is_operator() {
+    local token="$1"
+    case "$token" in
+        '+' | '-') return 0;;
+        '*' | '/') return 0;;
+        '^') return 0;;
+        'sin' | 'cos' | 'tan') return 0;;
+        'log' | 'exp') return 0;;
+        'sqrt') return 0;;
+        *) return 1;;
+    esac
+}
+
+is_unary() {
+    local token="$1"
+    case "$token" in 
+        'sin' | 'cos' | 'tan') return 0;;
+        'log' | 'exp') return 0;;
+        'sqrt') return 0;;
+        *) return 1;;
+    esac
+}
+
+compute_one_operand() {
+    local op="$1"
+    local x="$2"
+    case "$op" in
+        'sin') push "$(sin "$x")";;
+        'cos') push "$(cos "$x")";;
+    esac
+}
+
+compute_two_operand() {
+    local x="$1"
+    local op="$2"
+    local y="$3"
+    case "$op" in
+        '+') push "$(add "$x" "$y")";;
+        '-') push "$(sub "$x" "$y")";;
+        '*') push "$(mul "$x" "$y")";;
+        '/') push "$(div "$x" "$y")";;
+        '^') push "$(pow "$x" "$y")";;
+    esac
+}
+
+compute() {
+    pop
+    local b="$return_"
+    pop
+    local op="$return_"
+    if (is_unary "$op"); then 
+        compute_one_operand "$op" "$b"
+    fi
+    pop
+    local a="$return_"
+    compute_two_operand "$a" "$op" "$b"
+}
+
+compute_until() {
+    local until_token="$1"
+    while ! stack_check_prev_back_equal "$until_token"
+    do
+        compute
+    done
+}
+
+push '('
+push 10
+push '*'
+push 5
+push +
+push 4
+push '^'
+push 3
+compute_until '('
+pop
+echo "$return_"
+
+exit
+for token in "${tokens[@]}"; do 
+    if (! is_operator "$token"); then
+        echo Okay
+    fi
+done
