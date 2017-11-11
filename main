@@ -1,8 +1,4 @@
 #!/bin/bash
-if (($# < 1)); then
-    exit
-fi
-
 input="$@"
 declare -a tokens
 
@@ -273,6 +269,10 @@ for ((i = 1; i < input_size; i++)); do
     ${current}_next "$ch"
 done
 ${current}_exit 'start'
+
+if ((${#tokens[@]} == 0)); then
+    exit
+fi
 
 declare -a stack
 
