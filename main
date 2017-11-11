@@ -126,7 +126,7 @@ compute() {
     local b="$return_"
     pop
     local op="$return_"
-    if (is_unary "$op"); then 
+    if is_unary "$op"; then 
         compute_one_operand "$op" "$b"
         return 0
     fi
@@ -147,6 +147,7 @@ compute_until() {
     do
         compute
     done
+    # clear '('
     pop 
     local result="$return_"
     pop
@@ -164,15 +165,17 @@ for token in "${tokens[@]}"; do
         continue
     fi
 
-    stack_prev_back
-    prev_op="$return_"
-    if [[ "$prev_op" == "" ]] || [[ "$prev_op" == "(" ]]; then
+    stack_back
+    if ! is_number "$return_"; then
         push "$token"
         continue
     fi
 
-    if ! is_operator "$token"; then
-        echo "Loi cu phap"
+    stack_prev_back
+    prev_op="$return_"
+    if ! is_operator "$prev_op" ; then
+        push "$token"
+        continue
     fi
 
     if ! is_unary "$prev_op"; then 
@@ -187,10 +190,11 @@ for token in "${tokens[@]}"; do
         compute
     fi
 
+
     push "$token"
 done
 
 compute_until_unique
 
 pop
-echo "$return_"
+round "$return_"
