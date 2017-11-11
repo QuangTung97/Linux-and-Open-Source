@@ -10,14 +10,33 @@ push() {
 stack_prev_back() {
     local stack_size="${#stack[@]}"
     ((stack_size -= 2))
-    return_="${stack[$stack_size]}"
+    if ((stack_size < 0)); then
+        return_=""
+    else
+        return_="${stack[$stack_size]}"
+    fi
+}
+
+stack_back() {
+    local stack_size="${#stack[@]}"
+    ((stack_size--))
+    if ((stack_size < 0)); then
+        return_=""
+    else
+        return_="${stack[$stack_size]}"
+    fi
 }
 
 pop() {
     local stack_size="${#stack[@]}"
     ((stack_size--))
-    return_="${stack[$stack_size]}"
-    unset stack[$stack_size]
+
+    if ((stack_size < 0)); then
+        return_=""
+    else
+        return_="${stack[$stack_size]}"
+        unset stack[$stack_size]
+    fi
 }
 
 stack_size() {
@@ -65,12 +84,27 @@ is_unary() {
     esac
 }
 
+priority() {
+    local op="$1"
+    case "$op" in 
+        '+' | '-') return_=0;;
+        '*' | '/') return_=1;;
+        '^') return_=2;;
+        'sin' | 'cos' | 'tan') return_=3;;
+        'log' | 'exp') return_=3;;
+        'sqrt') return_=3;;
+    esac
+}
+
 compute_one_operand() {
     local op="$1"
     local x="$2"
     case "$op" in
         'sin') push "$(sin "$x")";;
         'cos') push "$(cos "$x")";;
+        'tan') push "$(tan "$x")";;
+        'log') push "$(log "$x")";;
+        'exp') push "$(exp "$x")";;
     esac
 }
 
@@ -94,10 +128,17 @@ compute() {
     local op="$return_"
     if (is_unary "$op"); then 
         compute_one_operand "$op" "$b"
+        return 0
     fi
     pop
     local a="$return_"
     compute_two_operand "$a" "$op" "$b"
+}
+
+compute_until_unique() {
+    while stack_size; ((return_ > 1)); do
+        compute
+    done
 }
 
 compute_until() {
@@ -106,23 +147,50 @@ compute_until() {
     do
         compute
     done
+    pop 
+    local result="$return_"
+    pop
+    push "$result"
 }
 
-push '('
-push 10
-push '*'
-push 5
-push +
-push 4
-push '^'
-push 3
-compute_until '('
+for token in "${tokens[@]}"; do 
+    if [[ "$token" == ')' ]]; then 
+        compute_until '('
+        continue
+    fi
+
+    if ! is_operator "$token"; then
+        push "$token"
+        continue
+    fi
+
+    stack_prev_back
+    prev_op="$return_"
+    if [[ "$prev_op" == "" ]] || [[ "$prev_op" == "(" ]]; then
+        push "$token"
+        continue
+    fi
+
+    if ! is_operator "$token"; then
+        echo "Loi cu phap"
+    fi
+
+    if ! is_unary "$prev_op"; then 
+        priority "$token"
+        p1="$return_"
+        priority "$prev_op"
+        p2="$return_"
+        if ((p1 <= p2)); then
+            compute
+        fi
+    else
+        compute
+    fi
+
+    push "$token"
+done
+
+compute_until_unique
+
 pop
 echo "$return_"
-
-exit
-for token in "${tokens[@]}"; do 
-    if (! is_operator "$token"); then
-        echo Okay
-    fi
-done
