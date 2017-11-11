@@ -1,0 +1,40 @@
+#!/bin/bash
+
+is_special() {
+    local ch="$1"
+    case "$ch" in
+        '+') return 0;;
+        '-') return 0;;
+        '*') return 0;;
+        '/') return 0;;
+        '(') return 0;;
+        ')') return 0;;
+        *) return 1;;
+    esac
+}
+
+is_dot() {
+    local ch="$1"
+    if [[ "$ch" == "." ]]; then 
+        return 0
+    fi
+    return 1
+}
+
+is_word() {
+    local ch="$1"
+    if { [[ ! "$ch" < a ]] && [[ ! "$ch" <= z ]]; } || \
+        { [[ "$ch" >= A ]] && [[ "$ch" <= Z ]]; }; then
+        return 0
+    fi
+    return 1
+}
+
+is_dot() {
+    local ch="$1"
+}
+
+is_dot() {
+    local ch="$1"
+}
+

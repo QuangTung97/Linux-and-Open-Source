@@ -1,4 +1,8 @@
 #!/bin/bash
+if (($# < 1)); then
+    exit
+fi
+
 tokens=( "$@" )
 declare -a stack
 
@@ -100,11 +104,12 @@ compute_one_operand() {
     local op="$1"
     local x="$2"
     case "$op" in
-        'sin') push "$(sin "$x")";;
-        'cos') push "$(cos "$x")";;
-        'tan') push "$(tan "$x")";;
-        'log') push "$(log "$x")";;
-        'exp') push "$(exp "$x")";;
+        'sin') push "$(./sin "$x")";;
+        'cos') push "$(./cos "$x")";;
+        'tan') push "$(./tan "$x")";;
+        'log') push "$(./log "$x")";;
+        'exp') push "$(./exp "$x")";;
+        'sqrt') push "$(./sqrt "$x")";;
     esac
 }
 
@@ -113,11 +118,11 @@ compute_two_operand() {
     local op="$2"
     local y="$3"
     case "$op" in
-        '+') push "$(add "$x" "$y")";;
-        '-') push "$(sub "$x" "$y")";;
-        '*') push "$(mul "$x" "$y")";;
-        '/') push "$(div "$x" "$y")";;
-        '^') push "$(pow "$x" "$y")";;
+        '+') push "$(./add "$x" "$y")";;
+        '-') push "$(./sub "$x" "$y")";;
+        '*') push "$(./mul "$x" "$y")";;
+        '/') push "$(./div "$x" "$y")";;
+        '^') push "$(./pow "$x" "$y")";;
     esac
 }
 
@@ -147,7 +152,7 @@ compute_until() {
     do
         compute
     done
-    # clear '('
+    # clear until_token
     pop 
     local result="$return_"
     pop
@@ -166,7 +171,7 @@ for token in "${tokens[@]}"; do
     fi
 
     stack_back
-    if ! is_number "$return_"; then
+    if ! ./is_number "$return_"; then
         push "$token"
         continue
     fi
@@ -197,4 +202,4 @@ done
 compute_until_unique
 
 pop
-round "$return_"
+./round "$return_"
