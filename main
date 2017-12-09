@@ -41,6 +41,7 @@ is_special() {
         '+') return 0;;
         '-') return 0;;
         '*') return 0;;
+        '^') return 0;;
         '/') return 0;;
         '(') return 0;;
         ')') return 0;;
@@ -90,6 +91,8 @@ allow_word() {
         log) return 0;;
         exp) return 0;;
         sqrt) return 0;;
+        e) return 0;;
+        pi) return 0;;
     esac
     return 1
 }
@@ -155,7 +158,15 @@ word_next() {
 
 word_exit() {
     if allow_word "$result"; then
+        if [ "$result" = "pi" ]; then
+            result="3.14159265358979323846"
+        elif [ "$result" = "e" ]; then
+            result="2.718281828459045235360287471352"
+        fi
         push_token "$result"
+    else
+        echo "Syntax error"
+        exit 1
     fi
 }
 
@@ -184,7 +195,9 @@ real_non_dot_exit() {
             tokens_prev_back
             local prev_back="$return_"
 
-            if ! ./is_number "$prev_back"; then
+            if [[ "$prev_back" = ')' ]]; then
+                push_token "$result"
+            elif ! ./is_number "$prev_back"; then
                 tokens_replace_back "${back}${result}"
             else
                 push_token "$result"
@@ -464,7 +477,6 @@ for token in "${tokens[@]}"; do
     else
         compute
     fi
-
 
     push "$token"
 done
