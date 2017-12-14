@@ -230,7 +230,9 @@ real_with_dot_exit() {
         tokens_prev_back
         local prev_back="$return_"
 
-        if ! ./is_number "$prev_back"; then
+        if [[ "$prev_back" = ')' ]]; then
+            push_token "$result"
+        elif ! ./is_number "$prev_back"; then
             tokens_replace_back "${back}${result}"
         else
             push_token "$result"
